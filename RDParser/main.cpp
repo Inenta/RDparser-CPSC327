@@ -29,7 +29,9 @@ enum TOKENTYPE {
     IMPLICATION,
     OR,
     AND,
-    NEGATE
+    NEGATE,
+    LEFTPAREN,
+    RIGHTPAREN
     
 };
 
@@ -56,4 +58,21 @@ void readFromFile()
         cout << "Unable to open file";
     
     myfile.close();
+}
+
+//removes the token at index
+void Eat(Token * tokens, int index){
+    
+}
+
+//returns the next token from the list
+TOKENTYPE Peek(Token * tokens){
+    
+}
+
+bool BiconditionalExpression(Token * tokens){
+    ImplicationExpression(tokens);
+    if(Peek(tokens) == Token.BICONDITIONAL){
+        Eat(tokens)
+    }
 }
