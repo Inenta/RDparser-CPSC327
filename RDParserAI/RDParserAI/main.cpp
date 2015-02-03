@@ -14,13 +14,6 @@
 #include <fstream>
 using namespace std;
 
-int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
-    return 0;
-}
-
-
 enum TOKENTYPE {
     
     BOOLTRUE,
@@ -40,6 +33,18 @@ struct Token
     TOKENTYPE type;
     char val;
 };
+
+void readFromFile();
+void Eat(Token * tokens, int& index);
+TOKENTYPE Peek(Token * tokens, int index);
+bool BiconditionalExpression(Token * tokens, int& index);
+bool ImplicationExpression(Token * tokens, int& index);
+
+int main(int argc, const char * argv[]) {
+    // insert code here...
+    std::cout << "Hello, World!\n";
+    return 0;
+}
 
 void readFromFile()
 {
@@ -61,18 +66,25 @@ void readFromFile()
 }
 
 //removes the token at index
-void Eat(Token * tokens, int index){
-    
+void Eat(Token * tokens, int& index){
+    index++;
 }
 
 //returns the next token from the list
-TOKENTYPE Peek(Token * tokens){
-    
+TOKENTYPE Peek(Token * tokens, int index){
+    return tokens[index].type;
 }
 
-bool BiconditionalExpression(Token * tokens){
-    ImplicationExpression(tokens);
-    if(Peek(tokens) == Token.BICONDITIONAL){
-        Eat(tokens)
+bool BiconditionalExpression(Token * tokens, int& index){
+    bool firstHalf = ImplicationExpression(tokens, index);
+    if(Peek(tokens, index) == BICONDITIONAL){
+        Eat(tokens, index);
+        return firstHalf && BiconditionalExpression(tokens, index);
+    } else {
+        return firstHalf;
     }
+}
+
+bool ImplicationExpression(Token * tokens, int& index){
+    return true;
 }
