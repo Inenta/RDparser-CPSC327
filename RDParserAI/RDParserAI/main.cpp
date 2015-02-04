@@ -99,8 +99,12 @@ bool ImplicationExpression(Token * tokens, int& index){
 }
 //This function is used as a grammer describes that of the '|' which is an Or statement.
 bool OrExpression(Token * tokens, int& index){
-    //replace this return later
-    return true;
+    bool firstHalf = AndExpression(tokens, index);
+    if(Peek(tokens, index) == OR){
+        Eat(tokens, index);
+        return firstHalf || OrExpression(tokens, index);
+    }
+    return firstHalf;
 }
 //This function is used as a grammer describes that of the '&' which is an And statement.
 bool AndExpression(Token * tokens, int& index) {
@@ -113,37 +117,32 @@ bool AndExpression(Token * tokens, int& index) {
 }
 //This function is used as a grammer describes that of the '~' which is a Negation.
 bool NegateExpression(Token * tokens, int& index){
-    //replace this return later
-    return true;
+    if(Peek(tokens, index) == NEGATE){
+        Eat(tokens, index);
+        return !Expression(tokens, index);
+    }
+    return Expression(tokens, index);
 }
 //This function is used as a grammer describes that of the '(' and ')' which is used by a biconditional.
 bool Expression(Token * tokens, int& index){
-    //UMMM WHAT DO I PUT HERE? There's no first half?
     if(Peek(tokens, index) == LEFTPAREN){
         Eat(tokens, index);
-        //returning function for now, Idk what to do
-        return BiconditionalExpression(tokens, index);
-    }
-    else if(Peek(tokens, index) == RIGHTPAREN){
+        bool exprVal = BiconditionalExpression(tokens, index);
         Eat(tokens, index);
-        //returning true for now, Idk what to do
-        return true;
+        return exprVal;
     }
     else
-        //returning true for now, Idk what to do
-        return true;
+        return LiteralExpression(tokens, index);
 }
 //This function is used as a grammer describes that of the 'true' or 'false which is as a true or false statement.
 bool LiteralExpression(Token * tokens, int& index) {
     if(Peek(tokens, index) == BOOLTRUE){
         Eat(tokens, index);
         return true;
-    } else if(Peek(tokens, index) == BOOLFALSE){
+    } else {
         Eat(tokens, index);
         return false;
     }
-    //have to put this here... otherwise we get an error.
-    return true;
 }
 
 
