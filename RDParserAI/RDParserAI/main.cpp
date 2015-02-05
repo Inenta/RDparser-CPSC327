@@ -45,7 +45,7 @@ bool AndExpression(Token * tokens, int& index);
 bool NegateExpression(Token * tokens, int& index);
 bool Expression(Token * tokens, int& index);
 bool LiteralExpression(Token * tokens, int& index);
-void Tokenizer(Token * tokens, string line);
+void Tokenizer(Token * tokens, const char *line, int size);
 
 int main(int argc, const char * argv[]) {
     readFromFile();
@@ -59,13 +59,17 @@ void readFromFile()
     {
         while(getline(myfile, line))
         {
-            cout << "Getting line" << endl;
+			
             int index = 0;
             Token tokens [50];
-            cout << line << endl;
             
-            Tokenizer(tokens, line);
-            cout << BiconditionalExpression(tokens, index) << endl;
+            int size = line.size();
+            Tokenizer(tokens, line.c_str(), size);
+            bool boolVal = BiconditionalExpression(tokens, index);
+			if(boolVal)
+				cout << ": TRUE" << endl;
+			else
+				cout << ": FALSE" << endl;
         }
     }
     
@@ -89,7 +93,8 @@ bool BiconditionalExpression(Token * tokens, int& index){
     bool firstHalf = ImplicationExpression(tokens, index);
     if(Peek(tokens, index) == BICONDITIONAL){
         Eat(tokens, index);
-        return firstHalf && BiconditionalExpression(tokens, index);
+        bool secondHalf = BiconditionalExpression(tokens, index);
+		return ((firstHalf && secondHalf) || (!firstHalf && !secondHalf));
     } else
         return firstHalf;
 }
@@ -98,7 +103,7 @@ bool ImplicationExpression(Token * tokens, int& index){
     bool firstHalf = OrExpression(tokens, index);
     if (Peek(tokens, index) == IMPLICATION){
         Eat(tokens, index);
-        return firstHalf && ImplicationExpression(tokens, index);
+        return !firstHalf || ImplicationExpression(tokens, index);
     }
     else
         return firstHalf;
@@ -150,84 +155,80 @@ bool LiteralExpression(Token * tokens, int& index) {
         return false;
     }
 }
-    void Tokenizer(Token * tokens, string line){
-       
-        //Used to take the string from a line of the file and make it an array of characters
-        int TempNumOne = line.size();
-        char logicalSentence[50];
-        for (int i = 0; i <= TempNumOne; i++)
-        {
-            logicalSentence [i] = line[i];
-        }
-        int tokensIndex = 0;
-        cout << "In Token my nigga" << endl;
-        for (int j = 0; j <= TempNumOne; j++)
-        {
-            if(logicalSentence[j] == 't')
-            {
-                Token * token;
-                token->type = BOOLTRUE;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-                j += 3;
-                break;
-            } else if(logicalSentence[j] == 'f') {
-                Token * token;
-                token->type = BOOLFALSE;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-                j += 4;
-            } else if(logicalSentence[j] == '~') {
-                Token * token;
-                token->type = NEGATE;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-            } else if(logicalSentence[j] == '&') {
-                Token * token;
-                token->type = AND;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-            } else if(logicalSentence[j] == '|') {
-                Token * token;
-                token->type = OR;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-            } else if(logicalSentence[j] == '=' && logicalSentence[j+1] == '>') {
-                Token * token;
-                token->type = IMPLICATION;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-                j ++;
-            } else if(logicalSentence[j] == '<' && logicalSentence[j+1] == '=' && logicalSentence[j+2] == '>') {
-                Token * token;
-                token->type = BICONDITIONAL;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-                j += 2;
-            } else if(logicalSentence[j] == '(') {
-                Token * token;
-                token->type = LEFTPAREN;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-            } else if(logicalSentence[j] == ')') {
-                Token * token;
-                token->type = RIGHTPAREN;
-                tokens[tokensIndex] = *token;
-                tokensIndex++;
-                delete token;
-            } else
-                break;
-            cout << "Finished part of FORLOOP" << endl;
-        }
-    }
+void Tokenizer(Token * tokens, const char *line, int size){
+   
+	//Used to take the string from a line of the file and make it an array of characters
+	char logicalSentence[300];
+	for (int i = 0; i < size; i++)
+	{
+		logicalSentence [i] = line[i];
+	}
+	
+	int tokensIndex = 0;
+	for (int j = 0; j < size - 1; j++)
+	{
+		if(logicalSentence[j] == 't')
+		{
+			Token token;
+			token.type = BOOLTRUE;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			j += 3;
+			cout << "T";
+		} else if(logicalSentence[j] == 'f') {
+			Token token;
+			token.type = BOOLFALSE;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			j += 4;
+			cout << "F";
+		} else if(logicalSentence[j] == '~') {
+			Token token;
+			token.type = NEGATE;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			cout << "~";
+		} else if(logicalSentence[j] == '&') {
+			Token token;
+			token.type = AND;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			cout << "&";
+		} else if(logicalSentence[j] == '|') {
+			Token token;
+			token.type = OR;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			cout << "|";
+		} else if(logicalSentence[j] == '=') {
+			Token token;
+			token.type = IMPLICATION;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			j++;
+			cout << "=>";
+		} else if(logicalSentence[j] == '<') {
+			Token token;
+			token.type = BICONDITIONAL;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			j += 2;
+			cout << "<=>";
+		} else if(logicalSentence[j] == '(') {
+			Token token;
+			token.type = LEFTPAREN;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			cout << "(";
+		} else if(logicalSentence[j] == ')') {
+			Token token;
+			token.type = RIGHTPAREN;
+			tokens[tokensIndex] = token;
+			tokensIndex++;
+			cout << ")";
+		}
+	}
+}
 
 
 
