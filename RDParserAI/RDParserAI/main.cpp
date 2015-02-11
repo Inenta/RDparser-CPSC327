@@ -26,6 +26,16 @@ enum TOKENTYPE {
     RIGHTPAREN
 };
 
+enum NODETYPE {
+    NODE_LITERAL,
+    NODE_BICONDITIONAL,
+    NODE_IMPLICATION,
+    NODE_OR,
+    NODE_AND,
+    NODE_NEGATE,
+    NODE_EXPRESSION
+};
+
 // Token Struct for __________
 struct Token
 {
@@ -33,18 +43,28 @@ struct Token
     char val;
 };
 
+struct Node {
+    NODETYPE type;
+    Node *left;
+    Node *right;
+};
+
 //Prototypes
 void readFromFile();
 void Eat(Token * tokens, int& index);
 TOKENTYPE Peek(Token * tokens, int index);
-bool BiconditionalExpression(Token * tokens, int& index);
-bool ImplicationExpression(Token * tokens, int& index);
-bool OrExpression(Token * tokens, int& index);
-bool AndExpression(Token * tokens, int& index);
-bool NegateExpression(Token * tokens, int& index);
-bool Expression(Token * tokens, int& index);
-bool LiteralExpression(Token * tokens, int& index);
+
+void BiconditionalExpression(Token * tokens, int& index, Node *node);
+void ImplicationExpression(Token * tokens, int& index, Node *node);
+void OrExpression(Token * tokens, int& index, Node *node);
+void AndExpression(Token * tokens, int& index, Node *node);
+void NegateExpression(Token * tokens, int& index, Node *node);
+void Expression(Token * tokens, int& index, Node *node);
+void LiteralExpression(Token * tokens, int& index, Node *node);
+
 void Tokenizer(Token * tokens, const char *line, int size);
+
+bool Eval(Node *node);
 
 int main(int argc, const char * argv[]) {
     readFromFile();
@@ -60,13 +80,17 @@ void readFromFile()
         {
             int index = 0;
             int size = line.size();
+            Node* headNode;
             Token tokens [50];
             Tokenizer(tokens, line.c_str(), size); 			// Creates tokens from expression on a single line
-            bool boolVal = BiconditionalExpression(tokens, index); 	// Evaluates the expression on a single line
-			if(boolVal)
-				cout << ": TRUE" << endl;
-			else
-				cout << ": FALSE" << endl;
+            //bool boolVal = BiconditionalExpression(tokens, index); 	// Evaluates the expression on a single line
+            BiconditionalExpression(tokens, index, headNode);
+            
+            //bool boolVal = Eval(headNode);
+			//if(boolVal)
+			//	cout << ": TRUE" << endl;
+			//else
+			//	cout << ": FALSE" << endl;
         }
     }
     else
@@ -85,18 +109,23 @@ TOKENTYPE Peek(Token * tokens, int index){
 }
 
 //This function is used as a grammer d '<=>' which is a biconditional.
-bool BiconditionalExpression(Token * tokens, int& index){
-    bool firstHalf = ImplicationExpression(tokens, index); 		//evaluation of first half
+void BiconditionalExpression(Token * tokens, int& index, Node *node){
+    node = new Node();
+    node->type = NODE_BICONDITIONAL;
+    ImplicationExpression(tokens, index, node->left);
+    
+    //bool firstHalf = ImplicationExpression(tokens, index); 		//evaluation of first half
     if(Peek(tokens, index) == BICONDITIONAL){ 				//if the next token is a biconditional
         Eat(tokens, index);
-        bool secondHalf = BiconditionalExpression(tokens, index);	//call to check for nested biconditionals
-		return ((firstHalf && secondHalf) || (!firstHalf && !secondHalf));
-    } else
-        return firstHalf;
+        BiconditionalExpression(tokens, index, node->right);
+        //bool secondHalf = BiconditionalExpression(tokens, index);	//call to check for nested biconditionals
+		//return ((firstHalf && secondHalf) || (!firstHalf && !secondHalf));
+    } //else
+        //return firstHalf;
 }
 
 //This function is used as a grammer describes that of the '=>' which is an Implication.
-bool ImplicationExpression(Token * tokens, int& index){
+void ImplicationExpression(Token * tokens, int& index, Node *node){
     bool firstHalf = OrExpression(tokens, index);			//evaluation of first half
     if (Peek(tokens, index) == IMPLICATION){				//if the next token is an implication
         Eat(tokens, index);
@@ -107,7 +136,7 @@ bool ImplicationExpression(Token * tokens, int& index){
 }
 
 //This function is used as a grammer describes that of the '|' which is an Or statement.
-bool OrExpression(Token * tokens, int& index){
+void OrExpression(Token * tokens, int& index, Node *node){
     bool firstHalf = AndExpression(tokens, index);			//evaluation of first half
     if(Peek(tokens, index) == OR){					//if the next token is an or statement
         Eat(tokens, index);
@@ -117,7 +146,7 @@ bool OrExpression(Token * tokens, int& index){
 }
 
 //This function is used as a grammer describes that of the '&' which is an And statement.
-bool AndExpression(Token * tokens, int& index) {
+void AndExpression(Token * tokens, int& index, Node *node) {
     bool firstHalf = NegateExpression(tokens, index);			//evaluation of first half
     if(Peek(tokens, index) == AND){					//if the next token is an and statement
         Eat(tokens, index);
@@ -127,7 +156,7 @@ bool AndExpression(Token * tokens, int& index) {
 }
 
 //This function is used as a grammer describes that of the '~' which is a Negation.
-bool NegateExpression(Token * tokens, int& index){
+void NegateExpression(Token * tokens, int& index, Node *node){
     if(Peek(tokens, index) == NEGATE){					//if the next token is a negation
         Eat(tokens, index);
         return !Expression(tokens, index);
@@ -136,7 +165,7 @@ bool NegateExpression(Token * tokens, int& index){
 }
 
 //This function is used as a grammer describes that of the '(' and ')' which is used by a biconditional.
-bool Expression(Token * tokens, int& index){
+void Expression(Token * tokens, int& index, Node *node){
     if(Peek(tokens, index) == LEFTPAREN){				//if the next token is a (
         Eat(tokens, index);
         bool exprVal = BiconditionalExpression(tokens, index);
@@ -147,7 +176,7 @@ bool Expression(Token * tokens, int& index){
 }
 
 //This function is used as a grammer describes that of the 'true' or 'false' which is as a true or false statement.
-bool LiteralExpression(Token * tokens, int& index) {
+void LiteralExpression(Token * tokens, int& index, Node *node) {
     if(Peek(tokens, index) == BOOLTRUE){				//if the next token is a true token
         Eat(tokens, index);
         return true;
@@ -176,60 +205,64 @@ void Tokenizer(Token * tokens, const char *line, int size){
 			tokens[tokensIndex] = token;
 			tokensIndex++;
 			j += 3;
-			cout << "T";
+			//cout << "T";
 		} else if(logicalSentence[j] == 'f') {
 			Token token;
 			token.type = BOOLFALSE;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
 			j += 4;
-			cout << "F";
+			//cout << "F";
 		} else if(logicalSentence[j] == '~') {
 			Token token;
 			token.type = NEGATE;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
-			cout << "~";
+			//cout << "~";
 		} else if(logicalSentence[j] == '&') {
 			Token token;
 			token.type = AND;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
-			cout << "&";
+			//cout << "&";
 		} else if(logicalSentence[j] == '|') {
 			Token token;
 			token.type = OR;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
-			cout << "|";
+			//cout << "|";
 		} else if(logicalSentence[j] == '=') {
 			Token token;
 			token.type = IMPLICATION;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
 			j++;
-			cout << "=>";
+			//cout << "=>";
 		} else if(logicalSentence[j] == '<') {
 			Token token;
 			token.type = BICONDITIONAL;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
 			j += 2;
-			cout << "<=>";
+			//cout << "<=>";
 		} else if(logicalSentence[j] == '(') {
 			Token token;
 			token.type = LEFTPAREN;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
-			cout << "(";
+			//cout << "(";
 		} else if(logicalSentence[j] == ')') {
 			Token token;
 			token.type = RIGHTPAREN;
 			tokens[tokensIndex] = token;
 			tokensIndex++;
-			cout << ")";
+			//cout << ")";
 		}
 	}
+}
+
+bool Eval(Node *node){
+    return true;
 }
 
 
