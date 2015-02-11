@@ -126,46 +126,70 @@ void BiconditionalExpression(Token * tokens, int& index, Node *node){
 
 //This function is used as a grammer describes that of the '=>' which is an Implication.
 void ImplicationExpression(Token * tokens, int& index, Node *node){
-    bool firstHalf = OrExpression(tokens, index);			//evaluation of first half
+    node = new Node();
+    node->type = NODE_IMPLICATION;
+    OrExpression(tokens, index, node->left);
+    
+    //bool firstHalf = OrExpression(tokens, index);			//evaluation of first half
     if (Peek(tokens, index) == IMPLICATION){				//if the next token is an implication
         Eat(tokens, index);
-        return !firstHalf || ImplicationExpression(tokens, index);
+        ImplicationExpression(tokens, index, node->right);
+        //return !firstHalf || ImplicationExpression(tokens, index);
     }
-    else
-        return firstHalf;
+    //else
+        //return firstHalf;
 }
 
 //This function is used as a grammer describes that of the '|' which is an Or statement.
 void OrExpression(Token * tokens, int& index, Node *node){
-    bool firstHalf = AndExpression(tokens, index);			//evaluation of first half
+    node = new Node();
+    node->type = NODE_OR;
+    AndExpression(tokens, index, node->left);
+    
+    //bool firstHalf = AndExpression(tokens, index);			//evaluation of first half
     if(Peek(tokens, index) == OR){					//if the next token is an or statement
         Eat(tokens, index);
-        return firstHalf || OrExpression(tokens, index);
+        OrExpression(tokens, index, node->right);
+      //  return firstHalf || OrExpression(tokens, index);
     }
-    return firstHalf;
+    //return firstHalf;
 }
 
 //This function is used as a grammer describes that of the '&' which is an And statement.
 void AndExpression(Token * tokens, int& index, Node *node) {
-    bool firstHalf = NegateExpression(tokens, index);			//evaluation of first half
+    node = new Node();
+    node->type = NODE_AND;
+    NegateExpression(tokens, index, node->left);
+    
+    //bool firstHalf = NegateExpression(tokens, index);			//evaluation of first half
     if(Peek(tokens, index) == AND){					//if the next token is an and statement
         Eat(tokens, index);
-        return firstHalf && AndExpression(tokens, index);
+        AndExpression(tokens, index, node->right);
+        //return firstHalf && AndExpression(tokens, index);
     }
-    return firstHalf;
+    //return firstHalf;
 }
 
 //This function is used as a grammer describes that of the '~' which is a Negation.
 void NegateExpression(Token * tokens, int& index, Node *node){
+    node = new Node();
+    node->type = NODE_NEGATE;
+    Expression(tokens, index, node->left);
+    
     if(Peek(tokens, index) == NEGATE){					//if the next token is a negation
         Eat(tokens, index);
-        return !Expression(tokens, index);
+        NegateExpression(tokens, index, node->right);
+        //return !Expression(tokens, index);
     }
-    return Expression(tokens, index);
+    //return Expression(tokens, index);
 }
 
 //This function is used as a grammer describes that of the '(' and ')' which is used by a biconditional.
 void Expression(Token * tokens, int& index, Node *node){
+    node = new Node();
+    node->type = NODE_EXPRESSION;
+    LiteralExpression(tokens, index, node->left);
+    
     if(Peek(tokens, index) == LEFTPAREN){				//if the next token is a (
         Eat(tokens, index);
         bool exprVal = BiconditionalExpression(tokens, index);
@@ -177,8 +201,12 @@ void Expression(Token * tokens, int& index, Node *node){
 
 //This function is used as a grammer describes that of the 'true' or 'false' which is as a true or false statement.
 void LiteralExpression(Token * tokens, int& index, Node *node) {
+    node = new Node();
+    node->type = NODE_LITERAL;
+    
     if(Peek(tokens, index) == BOOLTRUE){				//if the next token is a true token
         Eat(tokens, index);
+        node->left = true;
         return true;
     } else {								//else the token is false
         Eat(tokens, index);
