@@ -28,6 +28,8 @@ enum TOKENTYPE {
 
 enum NODETYPE {
     NODE_LITERAL,
+	NODE_TRUE,
+	NODE_FALSE,
     NODE_BICONDITIONAL,
     NODE_IMPLICATION,
     NODE_OR,
@@ -188,15 +190,14 @@ void NegateExpression(Token * tokens, int& index, Node *node){
 void Expression(Token * tokens, int& index, Node *node){
     node = new Node();
     node->type = NODE_EXPRESSION;
-    LiteralExpression(tokens, index, node->left);
     
     if(Peek(tokens, index) == LEFTPAREN){				//if the next token is a (
         Eat(tokens, index);
-        bool exprVal = BiconditionalExpression(tokens, index);
+        BiconditionalExpression(tokens, index, node->left);
         Eat(tokens, index);
-        return exprVal;
-    }
-    return LiteralExpression(tokens, index);
+    } else {
+		LiteralExpression(tokens, index, node->left);
+	}
 }
 
 //This function is used as a grammer describes that of the 'true' or 'false' which is as a true or false statement.
@@ -206,11 +207,12 @@ void LiteralExpression(Token * tokens, int& index, Node *node) {
     
     if(Peek(tokens, index) == BOOLTRUE){				//if the next token is a true token
         Eat(tokens, index);
-        node->left = true;
-        return true;
+        node->left = new Node();
+		node->left->type = NODE_TRUE;
     } else {								//else the token is false
         Eat(tokens, index);
-        return false;
+        node->left = new Node();
+		node->left->type = NODE_FALSE;
     }
 }
 
@@ -290,7 +292,31 @@ void Tokenizer(Token * tokens, const char *line, int size){
 }
 
 bool Eval(Node *node){
-    return true;
+	if(node->type == NODE_FALSE){
+		return false;
+	} else if (node->type == NODE_TRUE) {
+		return true;
+	} else if(node->right == NULL) {
+		return Eval(node->left);
+	} else {
+		bool leftVal = Eval(node->left);
+		bool rightVal = Eval(node->right);
+		if(node->type == NODE_BICONDITIONAL){
+			return ((leftVal && rightVal) || (!leftVal && !rightVal));
+		} else if(node->type == NODE_IMPLICATION) {
+			return !leftVal || rightVal;
+		} else if(node->type == NODE_OR) {
+			return leftVal || rightVal;
+		} else if(node->type == NODE_AND) {
+			return leftVal && rightVal;
+		} else if(node->type == NODE_NEGATE) {
+			return !leftVal;					//
+		} else if(node->type == NODE_EXPRESSION) {
+			return leftVal;						//
+		} else if(node->type == NODE_LITERAL) {
+			return leftVal;						//
+		}
+	}
 }
 
 
