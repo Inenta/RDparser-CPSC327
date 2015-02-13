@@ -88,6 +88,7 @@ void readFromFile()
             //bool boolVal = BiconditionalExpression(tokens, index); 	// Evaluates the expression on a single line
             BiconditionalExpression(tokens, index, headNode);
             
+            cout << Eval(headNode) << endl;
             //bool boolVal = Eval(headNode);
 			//if(boolVal)
 			//	cout << ": TRUE" << endl;
@@ -176,12 +177,13 @@ void AndExpression(Token * tokens, int& index, Node *node) {
 void NegateExpression(Token * tokens, int& index, Node *node){
     node = new Node();
     node->type = NODE_NEGATE;
-    Expression(tokens, index, node->left);
     
     if(Peek(tokens, index) == NEGATE){					//if the next token is a negation
         Eat(tokens, index);
-        NegateExpression(tokens, index, node->right);
+        Expression(tokens, index, node->right);
         //return !Expression(tokens, index);
+    } else {
+        Expression(tokens, index, node->left);
     }
     //return Expression(tokens, index);
 }
@@ -313,7 +315,7 @@ bool Eval(Node *node){
 			return !leftVal;					//
 		} else if(node->type == NODE_EXPRESSION) {
 			return leftVal;						//
-		} else if(node->type == NODE_LITERAL) {
+        } else {//node->type == NODE_LITERAL) {
 			return leftVal;						//
 		}
 	}
